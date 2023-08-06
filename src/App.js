@@ -1,25 +1,28 @@
-import logo from './logo.svg';
-import './App.css';
+import Dog from "./components/Dog";
+import DogSelect from "./components/DogSelect";
 
-function App() {
+import { useDogFact, useDogImageUrl } from "./hooks/dogHooks";
+
+const pathForRandom = { path: ["breeds", "image", "random"] }
+
+export default function App() {
+  const [dogImageUrl] = useDogImageUrl(pathForRandom)
+  const [dogFact] = useDogFact({ imageUrl: dogImageUrl })
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
+      <header>
+        <h1>Todo sobre perritos 🐶</h1>
+        <br></br>
+        <section>
+          <h3>Perrito aleatorio</h3>
+          <Dog imageUrl={dogImageUrl} fact={dogFact}></Dog>
+        </section>
       </header>
+
+      <main>
+        <DogSelect></DogSelect>
+      </main>
     </div>
   );
 }
-
-export default App;
