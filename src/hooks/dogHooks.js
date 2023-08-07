@@ -1,73 +1,62 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 
-const DOG_API = "https://dog.ceo/api"
+import {
+    getDogImageByBreed,
+    getDogFact,
+    getDogRandomImage,
+} from "../services/dogService.js";
 
-// path is an array
-const getImageUrl = async (path) => {
-    try {
-        const response = await fetch(`${DOG_API}/${path.join("/")}`)
-        const json = await response.json()
-
-        return json.message
-    } catch (error) {
-        console.error(error)
-    }
-}
-
-const getDogFact = async () => {
-    try {
-        const response = await fetch("https://dog-api.kinduff.com/api/facts")
-        const json = await response.json()
-
-        if (!json.success) throw new Error("No success from dog-api")
-
-        return json.facts[0]
-    } catch (error) {
-        console.error(error)
-    }
-}
-
-export function useDogImageUrl({ path }) {
+export function useDogImageUrl() {
     const [imageUrl, setImageUrl] = useState();
+    const abortControllerRef = useRef();
 
-    const refreshDog = () => {
-        getImageUrl(path).then((url) => {
-            setImageUrl(url)
-        })
-    }
-
-    useEffect(() => {
-        if (!path) return
-
-        let ignore = false
-
-        getImageUrl(path).then((url) => {
-            if (!ignore) setImageUrl(url)
-        })
-
-        return () => {
-            ignore = true
+    const refreshDog = useCallback((breed_info) => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
         }
-    }, [path])
 
-    return [imageUrl, refreshDog]
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+
+        let retrieveFunction;
+
+        if (breed_info && breed_info.breed !== undefined) {
+            retrieveFunction = () =>
+                getDogImageByBreed({
+                    ...breed_info,
+                    signal: controller.signal,
+                });
+        } else {
+            retrieveFunction = () =>
+                getDogRandomImage({ signal: controller.signal });
+        }
+
+        retrieveFunction().then((url) => {
+            if (controller.signal.aborted) return;
+            setImageUrl(url);
+        });
+    }, []);
+
+    return [imageUrl, refreshDog];
 }
 
-export function useDogFact({ imageUrl }) {
-    const [fact, setFact] = useState()
+export function useDogFact() {
+    const [fact, setFact] = useState();
+    const abortControllerRef = useRef();
 
-    useEffect(() => {
-        let ignore = false
-
-        getDogFact().then((fact) => {
-            if (!ignore)
-                setFact(fact)
-        })
-
-        return () => {
-            ignore = true
+    const refreshFact = useCallback(() => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
         }
-    }, [imageUrl])
 
-    return [fact]
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+
+        getDogFact({ signal: controller.signal }).then((dogFact) => {
+            if (controller.signal.aborted) return;
+            setFact(dogFact);
+        });
+    }, []);
+
+    return [fact, refreshFact];
 }

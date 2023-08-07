@@ -3,10 +3,9 @@ import DogSelect from "./components/DogSelect";
 
 import { useDogFact, useDogImageUrl } from "./hooks/dogHooks";
 
-const pathForRandom = { path: ["breeds", "image", "random"] }
 
 export default function App() {
-  const [dogImageUrl] = useDogImageUrl(pathForRandom)
+  const [dogImageUrl] = useDogImageUrl({})
   const [dogFact] = useDogFact({ imageUrl: dogImageUrl })
 
   return (
